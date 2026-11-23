@@ -1,0 +1,11 @@
+{
+  "name": "Logos Bookshelf",
+  "short_name": "Bookshelf",
+  "description": "A visual bookshelf of a Logos library. Click a book to open it in Logos.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2b1d14",
+  "theme_color": "#2b1d14",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

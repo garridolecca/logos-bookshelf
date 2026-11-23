@@ -4,59 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Logos Bookshelf</title>
-<meta name="description" content="A visual bookshelf of a Logos library. Click a book to open it in Logos.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%235a3a22'/><rect x='6' y='7' width='5' height='18' fill='%23c9a35a'/><rect x='13' y='5' width='6' height='20' fill='%23a33b2e'/><rect x='21' y='9' width='5' height='16' fill='%23375a7f'/></svg>">
-<style>
-:root{
-  --wall:#2b1d14; --wall2:#3a281b; --wood:#8a5a34; --wood-d:#5e3b20; --ink:#f3e9d8; --muted:#c9b79c; --accent:#e0b25a;
-  --font: Georgia, "Times New Roman", serif; --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--wall);color:var(--ink);font-family:var(--ui)}
-body{background:radial-gradient(ellipse at top,var(--wall2),var(--wall) 60%) fixed}
-header{position:sticky;top:0;z-index:5;background:rgba(43,29,20,.96);backdrop-filter:blur(6px);border-bottom:1px solid #1b120c;padding:10px 16px}
-.bar{max-width:1500px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-h1{font:600 1.25rem var(--font);margin:0 12px 0 0;letter-spacing:.02em}
-.search{flex:1 1 220px;min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #6b4a30;background:#1d130d;color:var(--ink);font:inherit}
-.search:focus{outline:2px solid var(--accent);border-color:var(--accent)}
-label{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:2px}
-select{padding:6px 8px;border-radius:8px;border:1px solid #6b4a30;background:#1d130d;color:var(--ink);font:inherit}
-.count{font-size:.85rem;color:var(--muted);margin-left:auto}
-main{max-width:1500px;margin:0 auto;padding:8px 16px 60px}
-.group{margin:22px 0 6px}
-.group h2{font:600 1.05rem var(--font);margin:0 0 8px;color:var(--accent);display:flex;gap:10px;align-items:baseline}
-.group h2 small{font:400 .8rem var(--ui);color:var(--muted)}
-.row{display:flex;align-items:flex-end;gap:2px;padding:0 10px;min-height:150px;content-visibility:auto;contain-intrinsic-size:auto 230px}
-.board{height:14px;border-radius:2px;background:linear-gradient(#a9743f,var(--wood) 40%,var(--wood-d));box-shadow:0 8px 12px rgba(0,0,0,.45);margin-bottom:14px}
-a.spine{display:flex;align-items:flex-start;justify-content:center;flex:0 0 auto;text-decoration:none;color:#fff8ea;border-radius:2px 2px 0 0;
-  border-left:1px solid rgba(255,255,255,.18);border-right:1px solid rgba(0,0,0,.35);overflow:hidden;position:relative;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.18), inset 3px 0 5px rgba(255,255,255,.07), inset -3px 0 6px rgba(0,0,0,.25);
-  transition:transform .12s ease}
-a.spine:hover,a.spine:focus-visible{transform:translateY(-8px);z-index:2;outline:none}
-a.spine:focus-visible{box-shadow:0 0 0 2px var(--accent)}
-a.spine::before{content:"";position:absolute;left:0;right:0;top:7px;height:3px;background:rgba(255,235,190,.55)}
-a.spine::after{content:"";position:absolute;left:0;right:0;bottom:7px;height:2px;background:rgba(255,235,190,.35)}
-a.spine.ex{border-top:3px dotted rgba(255,235,190,.7)}
-a.spine span{writing-mode:vertical-rl;font:600 11px/1.1 var(--font);padding:16px 0 14px;max-height:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.01em}
-.tip{position:fixed;z-index:20;pointer-events:none;max-width:320px;background:#1d130d;border:1px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:.82rem;line-height:1.35;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none}
-.tip b{display:block;font:600 .95rem var(--font);margin-bottom:2px}
-.tip i{color:var(--muted);font-style:normal}
-.empty{padding:40px 0;color:var(--muted);text-align:center}
-footer{max-width:1500px;margin:0 auto;padding:0 16px 40px;color:var(--muted);font-size:.8rem}
-@media (max-width:640px){h1{font-size:1.05rem}.count{margin-left:0;width:100%}}
-</style>
+<meta name="description" content="A visual bookshelf of a Logos library. Click a book to open it in Logos; find books on a Bible passage; build your own shelves.">
+<meta name="theme-color" content="#2b1d14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<a class="skip" href="#shelves">Skip to the shelves</a>
 <header>
   <div class="bar">
     <h1>Logos Bookshelf</h1>
-    <input class="search" id="q" type="search" placeholder="Search title, author, category or year" aria-label="Search the library" autocomplete="off">
+    <input class="search" id="q" type="search" placeholder="Search title, author, subject, series (press / to focus)" aria-label="Search the library" autocomplete="off">
     <label>Shelve by
       <select id="group">
         <option value="category">Category</option>
+        <option value="series">Series</option>
         <option value="author">Author (A to Z)</option>
         <option value="decade">Decade</option>
+        <option value="lang">Language</option>
         <option value="kind">Full or excerpt</option>
+        <option value="col">My shelves</option>
       </select>
     </label>
     <label>Sort within shelf
@@ -65,126 +33,47 @@ footer{max-width:1500px;margin:0 auto;padding:0 16px 40px;color:var(--muted);fon
         <option value="author">Author</option>
         <option value="year">Year</option>
         <option value="pages">Thickness</option>
+        <option value="rel">Most references (passage)</option>
       </select>
     </label>
-    <label>Open in
+    <label>Click opens
       <select id="target">
         <option value="web">Logos in the browser</option>
         <option value="app">Logos desktop app</option>
+        <option value="details">Details panel</option>
       </select>
     </label>
-    <span class="count" id="count"></span>
+    <label id="vwrap" style="display:none">View
+      <select id="view"><option value="spines">Spines</option><option value="covers">Covers</option></select>
+    </label>
+    <span class="count" id="count" aria-live="polite"></span>
+  </div>
+  <div class="bar">
+    <label>Books on a passage
+      <span class="chips"><select id="pbook" aria-label="Bible book"></select><select id="pch" aria-label="Chapter" style="display:none"></select></span>
+    </label>
+    <label>My shelves
+      <span class="chips"><select id="col" aria-label="Shelf"></select>
+        <button id="only" title="Show only the books on the chosen shelf">Only this shelf</button>
+        <button id="edit" aria-pressed="false" title="Click books to add or remove them from the chosen shelf">Pin mode</button></span>
+    </label>
+    <span class="chips" style="align-self:flex-end">
+      <button id="newcol">New shelf</button><button id="rencol">Rename</button><button class="danger" id="delcol">Delete</button>
+      <button id="sharecol">Share link</button><button id="expcol">Export</button><button id="impcol">Import</button>
+      <input id="impfile" type="file" accept="application/json" hidden>
+    </span>
+    <label class="chips" style="flex-direction:row;align-items:center;align-self:flex-end;gap:6px"><input type="checkbox" id="dups"> Show duplicate copies</label>
+    <button id="statsbtn" style="align-self:flex-end">Library stats</button>
+    <span class="chips" id="filters" style="align-self:flex-end" aria-live="polite"></span>
   </div>
 </header>
-<main id="shelves" aria-live="polite"></main>
-<footer>Unofficial personal project, not affiliated with Logos or Faithlife. Click a book to open it in Logos; you need to be signed in to Logos. Thickness follows the number of pages exported; dotted top edge marks an excerpt (the first 100 pages) rather than the full book.</footer>
+<div class="note" id="note" style="display:none"></div>
+<main id="shelves"></main>
+<footer>Unofficial personal project, not affiliated with Logos or Faithlife. A click opens the book in Logos (you need to be signed in). Shift+click, right-click, or press <b>i</b> on a focused book for details; press <b>p</b> to pin it to the chosen shelf. Thickness follows the page count of the exported copy; a dotted top edge marks an excerpt (first 100 pages); a gold ribbon marks a pinned book; a number in the corner counts copies or passage references. Notes and shelves stay in your browser. <a href="https://github.com/garridolecca/logos-bookshelf">Source</a>.</footer>
 <div class="tip" id="tip" role="tooltip"></div>
-<script>
-"use strict";
-const $ = (id) => document.getElementById(id);
-const store = {
-  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage blocked */ } },
-};
-let BOOKS = [];   // [rid, title, authors, category, year, kind, pages]
-let CATS = [];    // category names by size, for colors
-const GAP = 2, PAD = 20;
-
-function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
-function esc(s) { return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
-function url(rid) { return $("target").value === "app" ? "logosres:" + encodeURIComponent(rid) : "https://app.logos.com/books/" + encodeURIComponent(rid); }
-
-function look(b) {
-  const h = hash(b[0]);
-  const ci = Math.max(0, CATS.indexOf(b[3]));
-  const hue = (ci * 47 + (h % 14) - 7 + 360) % 360;
-  const sat = 32 + (h >> 4) % 26;
-  const lig = 24 + (h >> 9) % 16;
-  const w = Math.max(16, Math.min(50, Math.round(10 + Math.sqrt(b[6] || 20) * 2.3)));
-  const ht = 150 + (h >> 13) % 72;
-  return { w, ht, bg: `linear-gradient(90deg, hsl(${hue} ${sat}% ${lig + 6}%), hsl(${hue} ${sat}% ${lig}%) 55%, hsl(${hue} ${sat}% ${lig - 5}%))` };
-}
-
-function authorKey(b) { const a = (b[2].split(";")[0] || "").trim(); const c = a.charAt(0).toUpperCase(); return /[A-Z]/.test(c) ? c : "#"; }
-function groupKey(b, mode) {
-  if (mode === "author") return authorKey(b);
-  if (mode === "decade") { const y = parseInt(b[4], 10); return y ? (y < 1500 ? "Before 1500" : Math.floor(y / 10) * 10 + "s") : "Undated"; }
-  if (mode === "kind") return b[5] === "full" ? "Full books" : "Excerpts (first 100 pages)";
-  return b[3];
-}
-function sorter(mode) {
-  const t = (a, b) => a[1].localeCompare(b[1], "en", { sensitivity: "base" });
-  if (mode === "author") return (a, b) => a[2].localeCompare(b[2], "en", { sensitivity: "base" }) || t(a, b);
-  if (mode === "year") return (a, b) => (parseInt(a[4], 10) || 9999) - (parseInt(b[4], 10) || 9999) || t(a, b);
-  if (mode === "pages") return (a, b) => (b[6] || 0) - (a[6] || 0) || t(a, b);
-  return t;
-}
-
-function render() {
-  const q = $("q").value.trim().toLowerCase();
-  const gmode = $("group").value;
-  const terms = q ? q.split(/\s+/) : [];
-  const list = BOOKS.filter((b) => { if (!terms.length) return true; const hay = (b[1] + " " + b[2] + " " + b[3] + " " + b[4]).toLowerCase(); return terms.every((t) => hay.includes(t)); });
-  $("count").textContent = list.length.toLocaleString() + " of " + BOOKS.length.toLocaleString() + " books";
-  const groups = new Map();
-  for (const b of list) { const k = groupKey(b, gmode); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
-  let keys = [...groups.keys()];
-  if (gmode === "category") keys.sort((a, b) => groups.get(b).length - groups.get(a).length);
-  else if (gmode === "decade") keys.sort((a, b) => (a === "Before 1500" ? -1 : b === "Before 1500" ? 1 : a === "Undated" ? 1 : b === "Undated" ? -1 : parseInt(a) - parseInt(b)));
-  else keys.sort();
-  const avail = Math.max(260, $("shelves").clientWidth - PAD);
-  const cmp = sorter($("sort").value);
-  const out = [];
-  for (const k of keys) {
-    const books = groups.get(k).sort(cmp);
-    out.push(`<section class="group"><h2>${esc(k)} <small>${books.length.toLocaleString()}</small></h2>`);
-    let row = [], used = 0;
-    const flush = () => { if (row.length) out.push(`<div class="row">${row.join("")}</div><div class="board"></div>`); row = []; used = 0; };
-    for (const b of books) {
-      const L = look(b);
-      if (used + L.w + GAP > avail && row.length) flush();
-      used += L.w + GAP;
-      row.push(`<a class="spine${b[5] === "excerpt" ? " ex" : ""}" href="${esc(url(b[0]))}" target="_blank" rel="noopener" data-rid="${esc(b[0])}" data-i="${b[7]}" style="width:${L.w}px;height:${L.ht}px;background:${L.bg}"><span>${esc(b[1])}</span></a>`);
-    }
-    flush();
-    out.push("</section>");
-  }
-  $("shelves").innerHTML = out.length ? out.join("") : '<p class="empty">No books match that search.</p>';
-}
-
-// hover card
-const tip = $("tip");
-function showTip(e) {
-  const a = e.target.closest("a.spine");
-  if (!a) { tip.style.display = "none"; return; }
-  const b = BOOKS[+a.dataset.i];
-  tip.innerHTML = `<b>${esc(b[1])}</b>${esc(b[2] || "Unknown author")}<br><i>${esc(b[3])}${b[4] ? " · " + esc(b[4]) : ""} · ${b[5] === "full" ? "full book" : "excerpt"}</i>`;
-  tip.style.display = "block";
-  const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8), y = Math.min(e.clientY + 18, innerHeight - tip.offsetHeight - 8);
-  tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
-}
-$("shelves").addEventListener("mousemove", showTip);
-$("shelves").addEventListener("mouseleave", () => { tip.style.display = "none"; });
-
-function retarget() { document.querySelectorAll("a.spine").forEach((a) => { a.href = url(a.dataset.rid); }); }
-
-async function boot() {
-  for (const [id, key, def] of [["group", "lbs-group", "category"], ["sort", "lbs-sort", "title"], ["target", "lbs-target", "web"]]) {
-    $(id).value = store.get(key, def);
-    if (!$(id).value) $(id).value = def;
-    $(id).addEventListener("change", () => { store.set(key, $(id).value); if (id === "target") retarget(); else render(); });
-  }
-  let t; $("q").addEventListener("input", () => { clearTimeout(t); t = setTimeout(render, 150); });
-  let rw = 0; addEventListener("resize", () => { clearTimeout(rw); rw = setTimeout(render, 200); });
-  try {
-    const r = await fetch("data/books.json"); BOOKS = await r.json();
-  } catch (e) { $("shelves").innerHTML = '<p class="empty">Could not load data/books.json.</p>'; return; }
-  BOOKS.forEach((b, i) => b.push(i));
-  const counts = new Map(); BOOKS.forEach((b) => counts.set(b[3], (counts.get(b[3]) || 0) + 1));
-  CATS = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a));
-  render();
-}
-boot();
-</script>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="dtitle"><button class="x" id="dclose" aria-label="Close details">&times;</button><div id="dbody"></div></aside>
+<div class="modal" id="stats" role="dialog" aria-modal="true" aria-label="Library stats"><div class="box"><button class="x btn" style="position:absolute;top:10px;right:10px" aria-label="Close">&times;</button><h2>Library stats</h2><div id="sbody"></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="js/app.js"></script>
 </body>
 </html>
