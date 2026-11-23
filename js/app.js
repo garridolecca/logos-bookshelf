@@ -13,11 +13,13 @@ const store = {
 };
 const json = (s, d) => { try { return JSON.parse(s); } catch { return d; } };
 
+let STATUS = json(store.get("lbs-status", "{}"), {}); // rid -> read | reading | want (this browser only)
+const STATUS_LABEL = { read: "Read", reading: "Reading", want: "Want to read" };
 let BOOKS = [], CATS = [], PRIV = null, VER = "0", TWINS = new Map();
 let COLS = json(store.get("lbs-cols", "{}"), {});         // name -> [rid]
 let NOTES = json(store.get("lbs-notes", "{}"), {});       // rid -> text
 const S = {
-  q: "", group: "category", sort: "title", target: "web", view: "spines", dups: false,
+  status: "", q: "", group: "category", sort: "title", target: "web", view: "spines", dups: false,
   author: "", subject: "", series: "", col: "", only: false, edit: false,
   pb: 0, pch: 0,           // passage: Bible book number (1..66), chapter (0 = whole book)
   shared: null,            // {name, rids} from a ?share= link
@@ -114,6 +116,7 @@ function visible() {
     if (S.author && !parts(b[2]).includes(S.author)) return false;
     if (S.subject && !parts(b[7]).includes(S.subject)) return false;
     if (S.series && b[8] !== S.series) return false;
+    if (S.status && (S.status === "none" ? STATUS[b[0]] : STATUS[b[0]] !== S.status)) return false;
     if (passageMap && !passageMap.has(b[11])) return false;
     if (terms.length) { const hay = (b[1] + " " + b[2] + " " + b[3] + " " + b[4] + " " + b[7] + " " + b[8]).toLowerCase(); if (!terms.every((t) => hay.includes(t))) return false; }
     return true;
@@ -124,7 +127,7 @@ function visible() {
 function spineHtml(b, pins, cnt) {
   const L = look(b), pinned = pins.has(b[0]);
   const twins = TWINS.get(b[11]);
-  return `<a class="spine${b[5] === "excerpt" ? " ex" : ""}${pinned ? " pinned" : ""}" href="${esc(href(b))}" ${S.target === "details" ? "" : 'target="_blank" rel="noopener"'} data-i="${b[11]}" style="width:${L.w}px;height:${L.ht}px;background:${L.bg}" aria-label="${esc(b[1])}${b[2] ? ", " + esc(b[2]) : ""}"><span>${esc(b[1])}</span>${pinned ? '<i class="pin"></i>' : ""}${twins ? `<i class="twin">${twins + 1}x</i>` : ""}${cnt ? `<em class="cnt">${cnt}</em>` : ""}</a>`;
+  return `<a class="spine${b[5] === "excerpt" ? " ex" : ""}${pinned ? " pinned" : ""}${STATUS[b[0]] ? " st-" + STATUS[b[0]] : ""}" href="${esc(href(b))}" ${S.target === "details" ? "" : 'target="_blank" rel="noopener"'} data-i="${b[11]}" style="width:${L.w}px;height:${L.ht}px;background:${L.bg}" aria-label="${esc(b[1])}${b[2] ? ", " + esc(b[2]) : ""}"><span>${esc(b[1])}</span>${pinned ? '<i class="pin"></i>' : ""}${twins ? `<i class="twin">${twins + 1}x</i>` : ""}${cnt ? `<em class="cnt">${cnt}</em>` : ""}</a>`;
 }
 function coverHtml(b, pins, cnt) {
   const u = coverUrl(b);
@@ -230,10 +233,13 @@ function openDetails(i) {
     ${twins.length ? `<h3>Other copies</h3><p>${twins.map((t) => `<a href="${webUrl(t[0])}" target="_blank" rel="noopener">${esc(t[1])}</a> (${t[5]})`).join("<br>")}</p>` : ""}
     <h3>Shelves</h3>
     <div class="actions"><button id="dpin">${S.col && S.col !== "__shared__" ? (inCol ? "Remove from " : "Add to ") + esc(S.col) : "Choose a shelf above first"}</button><button id="dlink">Copy link to this book</button></div>
+    <h3>Reading status (saved in this browser)</h3>
+    <select id="dstatus" aria-label="Reading status"><option value="">Not marked</option>${Object.entries(STATUS_LABEL).map(([k, v]) => `<option value="${k}"${STATUS[b[0]] === k ? " selected" : ""}>${v}</option>`).join("")}</select>
     <h3>Notes (saved in this browser)</h3>
     <textarea id="dnote" aria-label="Notes">${esc(NOTES[b[0]] || "")}</textarea>`;
   const dr = $("drawer"); dr.classList.add("open"); dr.setAttribute("aria-hidden", "false");
   $("dclose").focus();
+  $("dstatus").addEventListener("change", (e) => { if (e.target.value) STATUS[b[0]] = e.target.value; else delete STATUS[b[0]]; store.set("lbs-status", JSON.stringify(STATUS)); render(); });
   $("dnote").addEventListener("input", (e) => { const v = e.target.value; if (v) NOTES[b[0]] = v; else delete NOTES[b[0]]; store.set("lbs-notes", JSON.stringify(NOTES)); });
   $("dpin").addEventListener("click", () => { if (S.col && S.col !== "__shared__") { togglePin(b[0]); openDetails(i); } else toast("Pick or create a shelf in the toolbar first"); });
   $("dlink").addEventListener("click", () => { copy(location.origin + location.pathname + "?b=" + encodeURIComponent(b[0])); });
@@ -369,6 +375,7 @@ function wire() {
   $("sort").addEventListener("change", (e) => { S.sort = e.target.value; store.set("lbs-sort", S.sort); render(); });
   $("target").addEventListener("change", (e) => { S.target = e.target.value; store.set("lbs-target", S.target); retarget(); writeUrl(); });
   $("view").addEventListener("change", (e) => { S.view = e.target.value; render(); });
+  $("status").addEventListener("change", (e) => { S.status = e.target.value; render(); });
   $("dups").addEventListener("change", (e) => { S.dups = e.target.checked; render(); });
   $("pbook").addEventListener("change", (e) => { S.pb = +e.target.value || 0; S.pch = 0; fillChapters(); applyPassage(); });
   $("pch").addEventListener("change", (e) => { S.pch = +e.target.value || 0; applyPassage(); });

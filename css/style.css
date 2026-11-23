@@ -81,3 +81,7 @@ footer a{color:var(--accent)}
 @media (max-width:640px){h1{font-size:1.05rem}.count{margin-left:0;width:100%}select{max-width:150px}}
 @media (prefers-reduced-motion:reduce){a.spine,.drawer{transition:none}}
 @media print{header,.drawer,.modal,.toast,.note,footer{display:none!important}body{background:#fff;color:#000}.group h2{color:#000}.board{box-shadow:none}}
+
+a.spine.st-read{opacity:.55}
+a.spine.st-reading::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:#d9a441}
+a.spine.st-want::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:#5b8bd9}
