@@ -30,6 +30,8 @@ const refsCache = new Map();
 // ---------------------------------------------------------------- helpers
 function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+let RECENT = json(store.get("lbs-recent", "[]"), []);
+function noteOpened(rid) { RECENT = [rid, ...RECENT.filter((r) => r !== rid)].slice(0, 15); store.set("lbs-recent", JSON.stringify(RECENT)); }
 function toast(t) { const el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => { el.style.display = "none"; }, 2200); }
 function webUrl(rid) { return "https://app.logos.com/books/" + encodeURIComponent(rid); }
 function appUrl(rid) { return "logosres:" + encodeURIComponent(rid); }
@@ -107,8 +109,24 @@ function sorter() {
     default: return t;
   }
 }
+const fold = (x) => String(x ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const OPS = { author: 2, cat: 3, category: 3, kind: 5, lang: 9, series: 8, subject: 7, title: 1 };
+// "gill author:spurgeon year:1850-1900 cat:commentary kind:full lang:es" or a "quoted phrase"
+function parseQuery(q) {
+  const terms = [], ops = [];
+  for (const m of fold(q).matchAll(/(?:(\w+):)?(?:"([^"]+)"|(\S+))/g)) {
+    const key = m[1], val = m[2] || m[3];
+    if (key === "year") {
+      const r = /^(<|>)?(\d{3,4})(?:-(\d{3,4}))?$/.exec(val);
+      if (r) { const a = +r[2], z = r[3] ? +r[3] : a; ops.push((b) => { const y = parseInt(b[4], 10); return !!y && (r[1] === "<" ? y < a : r[1] === ">" ? y > a : y >= a && y <= z); }); continue; }
+    }
+    if (key && OPS[key] !== undefined) { const i = OPS[key]; ops.push((b) => fold(b[i]).includes(val)); continue; }
+    terms.push(key ? key + ":" + val : val);
+  }
+  return { terms, ops };
+}
 function visible() {
-  const terms = S.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const { terms, ops } = parseQuery(S.q);
   const cs = S.only && S.col ? colSet() : null;
   return BOOKS.filter((b) => {
     if (b[10] !== -1 && !S.dups) return false;
@@ -118,7 +136,8 @@ function visible() {
     if (S.series && b[8] !== S.series) return false;
     if (S.status && (S.status === "none" ? STATUS[b[0]] : STATUS[b[0]] !== S.status)) return false;
     if (passageMap && !passageMap.has(b[11])) return false;
-    if (terms.length) { const hay = (b[1] + " " + b[2] + " " + b[3] + " " + b[4] + " " + b[7] + " " + b[8]).toLowerCase(); if (!terms.every((t) => hay.includes(t))) return false; }
+    if (ops.length && !ops.every((f) => f(b))) return false;
+    if (terms.length) { const hay = fold(b[1] + " " + b[2] + " " + b[3] + " " + b[4] + " " + b[7] + " " + b[8]); if (!terms.every((t) => hay.includes(t))) return false; }
     return true;
   });
 }
@@ -231,6 +250,7 @@ function openDetails(i) {
     ${parts(b[7]).length ? `<h3>Subjects</h3><div class="chips">${chips(parts(b[7]), "subject")}</div>` : ""}
     ${b[9] && b[9] !== "en" ? `<h3>Language</h3><p>${esc(LANGS[b[9]] || b[9])}</p>` : ""}
     ${twins.length ? `<h3>Other copies</h3><p>${twins.map((t) => `<a href="${webUrl(t[0])}" target="_blank" rel="noopener">${esc(t[1])}</a> (${t[5]})`).join("<br>")}</p>` : ""}
+    ${(() => { const au = parts(b[2])[0]; if (!au) return ""; const more = BOOKS.filter((x) => x[10] === -1 && x[11] !== i && parts(x[2]).includes(au)).slice(0, 8); return more.length ? `<h3>More by ${esc(au)}</h3><ul class="plain">${more.map((x) => `<li><a href="${esc(webUrl(x[0]))}" target="_blank" rel="noopener">${esc(x[1])}</a>${x[4] ? " (" + esc(x[4]) + ")" : ""}</li>`).join("")}</ul>` : ""; })()}
     <h3>Shelves</h3>
     <div class="actions"><button id="dpin">${S.col && S.col !== "__shared__" ? (inCol ? "Remove from " : "Add to ") + esc(S.col) : "Choose a shelf above first"}</button><button id="dlink">Copy link to this book</button></div>
     <h3>Reading status (saved in this browser)</h3>
@@ -280,6 +300,30 @@ function delCol() {
   if (!confirm(`Delete the shelf "${S.col}"? The books stay in the library.`)) return;
   delete COLS[S.col]; S.col = ""; S.only = false; saveCols(); refreshCols(); render();
 }
+function showList(title, books, hint) {
+  const ridIndex = new Map(BOOKS.map((b) => [b[0], b]));
+  const rows = books.map((b) => `<li><a href="${esc(webUrl(b[0]))}" target="_blank" rel="noopener">${esc(b[1])}</a>${b[2] ? ", " + esc(b[2]) : ""}${b[4] ? " (" + esc(b[4]) + ")" : ""} <button class="chip" data-detail="${b[11]}">details</button></li>`).join("");
+  $("dbody").innerHTML = `<h2 id="dtitle">${esc(title)}</h2>${hint ? `<p>${esc(hint)}</p>` : ""}${rows ? `<ol class="plain">${rows}</ol>` : "<p>Nothing here yet.</p>"}`;
+  const dr = $("drawer"); dr.classList.add("open"); dr.setAttribute("aria-hidden", "false"); $("dclose").focus();
+  $("dbody").querySelectorAll("[data-detail]").forEach((el) => el.addEventListener("click", () => openDetails(+el.dataset.detail)));
+  return ridIndex;
+}
+function showRecent() {
+  const m = new Map(BOOKS.map((b) => [b[0], b]));
+  showList("Recently opened", RECENT.map((r) => m.get(r)).filter(Boolean), "Books you opened from this page, newest first. Stored only in this browser.");
+}
+function surprise() {
+  const pool = visible().filter((b) => !STATUS[b[0]]);
+  if (!pool.length) { toast("No unmarked books in this view"); return; }
+  openDetails(pool[Math.floor(Math.random() * pool.length)][11]);
+}
+function shelfMarkdown() {
+  if (!S.col || S.col === "__shared__") { toast("Pick one of your shelves first"); return; }
+  const m = new Map(BOOKS.map((b) => [b[0], b]));
+  const md = `# ${S.col}\n\n` + COLS[S.col].map((r) => m.get(r)).filter(Boolean).map((b) => `- [${b[1]}](${webUrl(b[0])})${b[2] ? " - " + b[2] : ""}${b[4] ? " (" + b[4] + ")" : ""}`).join("\n") + "\n";
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
+  a.download = S.col.replace(/[^\w -]+/g, "_") + ".md"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
 function exportCols() {
   const blob = new Blob([JSON.stringify({ shelves: COLS, notes: NOTES }, null, 1)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "logos-bookshelf-shelves.json"; a.click();
@@ -308,7 +352,7 @@ function showStats() {
   const pages = bs.reduce((s, b) => s + (b[6] || 0), 0), full = bs.filter((b) => b[5] === "full").length;
   const cent = new Map(); for (const b of bs) { const y = parseInt(b[4], 10); if (y) { const k = y < 1500 ? "Before 1500" : Math.floor(y / 100) * 100 + "s"; cent.set(k, (cent.get(k) || 0) + 1); } }
   const centRows = [...cent.entries()].sort((a, b) => (a[0] === "Before 1500" ? -1 : b[0] === "Before 1500" ? 1 : parseInt(a[0]) - parseInt(b[0])));
-  $("sbody").innerHTML = `<div class="stats-grid"><div class="stat"><b>${bs.length.toLocaleString()}</b>distinct books</div><div class="stat"><b>${full.toLocaleString()}</b>full books</div><div class="stat"><b>${(bs.length - full).toLocaleString()}</b>excerpts</div><div class="stat"><b>${pages.toLocaleString()}</b>pages exported</div><div class="stat"><b>${(BOOKS.length - bs.length).toLocaleString()}</b>duplicate copies hidden</div></div>
+  $("sbody").innerHTML = `<div class="stats-grid"><div class="stat"><b>${bs.length.toLocaleString()}</b>distinct books</div><div class="stat"><b>${full.toLocaleString()}</b>full books</div><div class="stat"><b>${(bs.length - full).toLocaleString()}</b>excerpts</div><div class="stat"><b>${pages.toLocaleString()}</b>pages exported</div><div class="stat"><b>${(BOOKS.length - bs.length).toLocaleString()}</b>duplicate copies hidden</div>${Object.keys(STATUS).length ? `<div class="stat"><b>${bs.filter((b) => STATUS[b[0]] === "read").length}</b>marked read</div><div class="stat"><b>${bs.filter((b) => STATUS[b[0]] === "reading").length}</b>reading</div><div class="stat"><b>${bs.filter((b) => STATUS[b[0]] === "want").length}</b>want to read</div>` : ""}</div>
    <h3>By category</h3>${bars(cnt((b) => b[3]).slice(0, 16))}
    <h3>By century of the edition</h3>${bars(centRows)}
    <h3>Most books by author</h3>${bars(cnt((b) => parts(b[2])).filter(([k]) => !/^(Edited|Various)/i.test(k)).slice(0, 15))}
@@ -357,6 +401,7 @@ function wire() {
     const i = +a.dataset.i;
     if (e.shiftKey || S.target === "details") { e.preventDefault(); openDetails(i); return; }
     if (S.edit) { e.preventDefault(); togglePin(BOOKS[i][0]); return; }
+    noteOpened(BOOKS[i][0]);
   });
   sh.addEventListener("contextmenu", (e) => { const a = e.target.closest("a.spine,a.cover"); if (!a) return; e.preventDefault(); openDetails(+a.dataset.i); });
   sh.addEventListener("keydown", (e) => {
@@ -375,6 +420,7 @@ function wire() {
   $("sort").addEventListener("change", (e) => { S.sort = e.target.value; store.set("lbs-sort", S.sort); render(); });
   $("target").addEventListener("change", (e) => { S.target = e.target.value; store.set("lbs-target", S.target); retarget(); writeUrl(); });
   $("view").addEventListener("change", (e) => { S.view = e.target.value; render(); });
+  $("recent").addEventListener("click", showRecent); $("surprise").addEventListener("click", surprise); $("expmd").addEventListener("click", shelfMarkdown);
   $("status").addEventListener("change", (e) => { S.status = e.target.value; render(); });
   $("dups").addEventListener("change", (e) => { S.dups = e.target.checked; render(); });
   $("pbook").addEventListener("change", (e) => { S.pb = +e.target.value || 0; S.pch = 0; fillChapters(); applyPassage(); });

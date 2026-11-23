@@ -15,7 +15,7 @@
 <header>
   <div class="bar">
     <h1>Logos Bookshelf</h1>
-    <input class="search" id="q" type="search" placeholder="Search title, author, subject, series (press / to focus)" aria-label="Search the library" autocomplete="off">
+    <input class="search" id="q" type="search" placeholder="Search, e.g. gill author:spurgeon year:1850-1900 cat:commentary (press / to focus)" title="Words match title, author, category, year, subject, series. Operators: author: cat: kind:full|excerpt lang: series: subject: title: year:1850 / year:1600-1700 / year:&lt;1700" aria-label="Search the library" autocomplete="off">
     <label>Shelve by
       <select id="group">
         <option value="category">Category</option>
@@ -59,12 +59,13 @@
     </label>
     <span class="chips" style="align-self:flex-end">
       <button id="newcol">New shelf</button><button id="rencol">Rename</button><button class="danger" id="delcol">Delete</button>
-      <button id="sharecol">Share link</button><button id="expcol">Export</button><button id="impcol">Import</button>
+      <button id="sharecol">Share link</button><button id="expcol">Export</button><button id="expmd" title="Download the chosen shelf as a Markdown list of links">Markdown</button><button id="impcol">Import</button>
       <input id="impfile" type="file" accept="application/json" hidden>
     </span>
     <label class="chips" style="align-self:flex-end">Reading status <select id="status" aria-label="Filter by reading status"><option value="">All</option><option value="read">Read</option><option value="reading">Reading</option><option value="want">Want to read</option><option value="none">Not marked</option></select></label>
     <label class="chips" style="flex-direction:row;align-items:center;align-self:flex-end;gap:6px"><input type="checkbox" id="dups"> Show duplicate copies</label>
     <button id="statsbtn" style="align-self:flex-end">Library stats</button>
+    <button id="recent" style="align-self:flex-end">Recent</button><button id="surprise" style="align-self:flex-end" title="Open the details of a random book you have not marked">Surprise me</button>
     <span class="chips" id="filters" style="align-self:flex-end" aria-live="polite"></span>
   </div>
 </header>

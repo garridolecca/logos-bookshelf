@@ -85,3 +85,5 @@ footer a{color:var(--accent)}
 a.spine.st-read{opacity:.55}
 a.spine.st-reading::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:#d9a441}
 a.spine.st-want::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:#5b8bd9}
+
+ol.plain,ul.plain{padding-left:1.2em;line-height:1.6}
